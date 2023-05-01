@@ -52,6 +52,8 @@ function love.update(dt)
   -- ground parallax effect
   groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
     % VIRTUAL_WIDTH
+
+  bird:update(dt)
 end
 
 function love.draw()
