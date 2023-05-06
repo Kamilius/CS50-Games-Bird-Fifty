@@ -41,6 +41,20 @@ function love.load()
   hugeFont = love.graphics.newFont('assets/fonts/flappy.ttf', 56)
   love.graphics.setFont(flappyFont)
 
+  -- initialize sounds table
+  sounds = {
+    ['jump'] = love.audio.newSource('assets/sounds/jump.wav', 'static'),
+    ['explosion'] = love.audio.newSource('assets/sounds/explosion.wav', 'static'),
+    ['hurt'] = love.audio.newSource('assets/sounds/hurt.wav', 'static'),
+    ['score'] = love.audio.newSource('assets/sounds/score.wav', 'static'),
+    -- initialize music
+    ['music'] = love.audio.newSource('assets/sounds/marios_way.mp3', 'static')
+  }
+
+    -- kick off music
+  sounds.music:setLooping(true)
+  sounds.music:play()
+
   -- seed the RNG
   math.randomseed(os.time())
 

@@ -32,6 +32,7 @@ function Bird:update(dt)
 
   if love.keyboard.keysPressed['space'] or love.keyboard.keysPressed['lmb'] then
     self.dy = ANTI_GRAVITY
+    sounds.jump:play()
   end
 
   -- apply velocity to bird's current position
