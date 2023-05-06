@@ -42,9 +42,9 @@ end
 ]]
 function Bird:collides(pipe)
   --[[
-    the 2's are left and top offsets
-    the 4's are right and bottom offsets
-    both offsets are used to shrink the bounding box and forgive the player
+    - the 2's are left and top offsets
+    - the 4's are right and bottom offsets
+    - both offsets are used to shrink the bounding box and forgive the player
     a slight collisions
   ]]
   if (self.x + 2) + (self.width - 4) >= pipe.x and self.x <= pipe.x + PIPE_WIDTH then

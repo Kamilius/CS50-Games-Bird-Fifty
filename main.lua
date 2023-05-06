@@ -1,9 +1,14 @@
 push = require('push')
 Class = require('class')
 
-require('Bird')
-require('Pipe')
-require('PipePair')
+require 'Bird'
+require 'Pipe'
+require 'PipePair'
+
+require 'StateMachine'
+require 'states/BaseState'
+require 'states/PlayState'
+require 'states/TitleScreenState'
 
 WINDOW_WIDTH = 1280
 WINDOW_HEIGHT = 720
@@ -22,20 +27,17 @@ local GROUND_SCROLL_SPEED = 60
 
 local BACKGROUND_LOOPING_POINT = 413
 
-local bird = Bird()
-
-local pipePairs = {}
--- timer for spawning pipes
-local pipeSpawnTimer = 0
-
-local lastY = -PIPE_HEIGHT + math.random(80) + 20
-
-local scrolling = false
-
 function love.load()
   love.graphics.setDefaultFilter('nearest', 'nearest')
 
   love.window.setTitle('Fifty Bird')
+
+  -- initialize nice-looking retro text fonts
+  smallFont = love.graphics.newFont('assets/fonts/font.ttf', 8)
+  mediumFont = love.graphics.newFont('assets/fonts/flappy.ttf', 14)
+  flappyFont = love.graphics.newFont('assets/fonts/flappy.ttf', 28)
+  hugeFont = love.graphics.newFont('assets/fonts/flappy.ttf', 56)
+  love.graphics.setFont(flappyFont)
 
   -- seed the RNG
   math.randomseed(os.time())
@@ -46,6 +48,14 @@ function love.load()
     resizable = true
   })
 
+  -- initializing the state machine
+  gStateMachine = StateMachine {
+    ['title'] = function() return TitleScreenState() end,
+    ['play'] = function() return PlayState() end,
+  }
+  gStateMachine:change('title')
+
+  -- initialize input table
   love.keyboard.keysPressed = {}
 end
 
@@ -54,6 +64,7 @@ function love.resize(w, h)
 end
 
 function love.mousepressed(x, y, button)
+  -- 1 is for the Left Mouse Button -> 'lmb'
   if button == 1 then
     love.keyboard.keysPressed['lmb'] = true
   end
@@ -61,13 +72,6 @@ end
 
 function love.keypressed(key)
   love.keyboard.keysPressed[key] = true
-
-  if key == 'return' then
-    bird:reset()
-    pipePairs = {}
-
-    scrolling = true
-  end
 
   if key == 'escape' then
     love.event.quit()
@@ -83,46 +87,16 @@ function love.keyboard.wasPressed(key)
 end
 
 function love.update(dt)
-    if scrolling then
-        -- background parallax effect
-        backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
-            % BACKGROUND_LOOPING_POINT
+  -- background parallax effect
+  backgroundScroll = (backgroundScroll + BACKGROUND_SCROLL_SPEED * dt)
+      % BACKGROUND_LOOPING_POINT
 
-        -- ground parallax effect
-        groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
-            % VIRTUAL_WIDTH
+  -- ground parallax effect
+  groundScroll = (groundScroll + GROUND_SCROLL_SPEED * dt)
+      % VIRTUAL_WIDTH
 
-        -- Update pipes spawn timer
-        pipeSpawnTimer = pipeSpawnTimer + dt
-
-        if pipeSpawnTimer > 2 then
-            local y = math.max(-PIPE_HEIGHT + 10,
-                math.min(lastY + math.random(-20, 20), VIRTUAL_HEIGHT - 90 - PIPE_HEIGHT))
-            lastY = y
-
-            table.insert(pipePairs, PipePair(y))
-            pipeSpawnTimer = 0
-        end
-
-        bird:update(dt)
-
-        -- for every pipe pair in the scene...
-        for k, pair in pairs(pipePairs) do
-            pair:update(dt)
-
-            -- check to see if bird collided with pipe
-            for l, pipe in pairs(pair.pipes) do
-              if bird:collides(pipe) then
-                -- pause the game to show collision
-                scrolling = false
-              end
-            end
-
-            if pair.x < -PIPE_WIDTH then
-              pair.remove = true
-            end
-        end
-    end
+  -- now we just update the state machine
+  gStateMachine:update(dt)
 
   -- Clear keysPressed list
   love.keyboard.keysPressed = {}
@@ -131,17 +105,10 @@ end
 function love.draw()
   push:start()
 
-  -- render background
+  -- Draw state machine between background and ground
   love.graphics.draw(background, -backgroundScroll, 0)
-
-  for k, pair in pairs(pipePairs) do
-    pair:render()
-  end
-
-  -- render ground
+  gStateMachine:render()
   love.graphics.draw(ground, -groundScroll, VIRTUAL_HEIGHT - 16)
-
-  bird:render()
 
   push:finish()
 end
