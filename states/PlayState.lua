@@ -10,6 +10,9 @@ function PlayState:init()
   -- timer for spawning pipes
   self.timer = 0
 
+  -- keep track of the score
+  self.score = 0
+
   self.lastY = -PIPE_HEIGHT + math.random(80) + 20
 end
 
@@ -29,7 +32,16 @@ function PlayState:update(dt)
 
   -- for every pipe pair in the scene...
   for k, pair in pairs(self.pipePairs) do
-      pair:update(dt)
+    -- score a point if the pipe has gone past the bird to the left
+    -- be sure to ignore it if it's already been scored
+    if not pair.scored then
+      if pair.x + PIPE_WIDTH < self.bird.x then
+        self.score = self.score + 1
+        pair.scored = true
+      end
+    end
+
+    pair:update(dt)
   end
 
   for k, pair in pairs(self.pipePairs) do
@@ -44,13 +56,17 @@ function PlayState:update(dt)
     -- check to see if bird collided with pipe
     for l, pipe in pairs(pair.pipes) do
       if self.bird:collides(pipe) then
-          gStateMachine:change('title')
+          gStateMachine:change('score', {
+            score = self.score
+          })
       end
     end
   end
 
   if self.bird.y > VIRTUAL_HEIGHT - 15 then
-    gStateMachine:change('title')
+    gStateMachine:change('score', {
+      score = self.score
+    })
   end
 end
 
@@ -58,6 +74,9 @@ function PlayState:render()
   for k, pair in pairs(self.pipePairs) do
       pair:render()
   end
+
+  love.graphics.setFont(flappyFont)
+  love.graphics.print('Score: ' .. tostring(self.score), 8, 8)
 
   self.bird:render()
 end

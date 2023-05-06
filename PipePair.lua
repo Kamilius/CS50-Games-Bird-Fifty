@@ -13,6 +13,8 @@ function PipePair:init(y)
 
     -- wether pair is ready to be removeds
     self.remove = false
+
+    self.scored = false
 end
 
 function PipePair:update(dt)
